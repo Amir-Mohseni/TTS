@@ -6,3 +6,6 @@ scipy
 munch
 IPython
 soundfile
+fastapi
+uvicorn[standard]
+gradio

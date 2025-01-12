@@ -54,7 +54,7 @@ class TTS:
 # Example usage
 if __name__ == "__main__":
     tts = TTS()
-    audio, out_ps = tts("Once a year, go someplace you've never been before.", voice_type=0)
+    audio, out_ps = tts("Once a year, go someplace you've never been before.")
     # Save the audio to a file
     output_file = "output_audio.wav"
     sf.write(output_file, audio, tts.sample_rate)
