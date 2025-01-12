@@ -1,0 +1,8 @@
+# For TTS
+phonemizer
+torch
+transformers
+scipy
+munch
+IPython
+soundfile
