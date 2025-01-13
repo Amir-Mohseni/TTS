@@ -20,7 +20,7 @@ def synthesize_audio(text_str: str, voice_name: str):
     with locker:
         try:
             # Synthesize audio
-            tts.load_voice(voice_name)
+            tts.load_voice_by_name(voice_name)
             audio_array, *_ = tts(text_str)
             
             # Write to a temporary file
@@ -40,7 +40,7 @@ def build_app():
     with gr.Blocks() as demo:
         gr.Markdown(
             """
-            <h1 align="center">Text-to-Speech</h1>
+            <h1 align="center">Simple Text-to-Speech</h1>
             1. Paste your text below<br>
             2. Select a voice<br>
             3. Click Generate and listen to the result
@@ -56,7 +56,7 @@ def build_app():
             voice_dropdown = gr.Dropdown(
                 label="Select Voice",
                 choices=list(tts.voice_names),
-                value=0,
+                value='af',
             )
 
         with gr.Row(variant="panel"):

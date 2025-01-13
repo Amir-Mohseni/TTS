@@ -39,6 +39,13 @@ class TTS:
         print(f'Loaded voice: {VOICE_NAME}')
         self.voice_pack = VOICEPACK
         
+    def load_voice_by_name(self, voice_name: str):
+        if voice_name not in self.voice_names:
+            print(f"Voice name {voice_name} not found.")
+            raise ValueError(f"Voice name {voice_name} not found.")
+        voice_type = self.voice_names.index(voice_name)
+        self.load_voice(voice_type)
+        
     def __call__(self, text: str):
         if self.voice_pack is None:
             self.load_voice(0)
