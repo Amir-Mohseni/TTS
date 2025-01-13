@@ -39,9 +39,9 @@ class TTS:
         print(f'Loaded voice: {VOICE_NAME}')
         self.voice_pack = VOICEPACK
         
-    def __call__(self, text: str, voice_type: int = 0):
+    def __call__(self, text: str):
         if self.voice_pack is None:
-            self.load_voice(voice_type)
+            self.load_voice(0)
         audio, out_ps = generate(self.model, text, self.voice_pack, lang=self.voice_name[0])
         return audio, out_ps
     
