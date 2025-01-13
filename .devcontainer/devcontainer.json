@@ -1,0 +1,17 @@
+{
+    "name": "Python Development Environment",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": ".."
+    },
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+    ],
+    "forwardPorts": [],
+    "postCreateCommand": "pip install --no-cache-dir -r requirements.txt",
+    "remoteUser": "root"
+}

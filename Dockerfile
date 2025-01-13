@@ -1,29 +1,20 @@
-# Use the base image from Hugging Face documentation
-FROM python:3.9
-
-# Add a non-root user
-RUN useradd -m -u 1000 user
-USER user
-ENV PATH="/home/user/.local/bin:$PATH"
-
-# Set the working directory
+# Use a base image with Python and Linux
+FROM python:3.9-slim
+# Set the working directory inside the container
 WORKDIR /app
-
-# Install system dependencies for TTS
-USER root
+# Install system-level dependencies
 RUN apt-get update && apt-get install -y \
-    espeak-ng \
-    ffmpeg \
-    libsndfile1 && \
+    git \
+    git-lfs \
+    espeak-ng && \
     rm -rf /var/lib/apt/lists/*
-USER user
-
-# Copy and install Python dependencies
-COPY --chown=user ./requirements.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
-
-# Copy app code
-COPY --chown=user . /app
-
-# Set the command to run the app
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+# Clone the Hugging Face repository
+RUN git lfs install && \
+    git clone https://huggingface.co/hexgrad/Kokoro-82M /app/Kokoro_82M
+# Copy the Python file to the container
+COPY Text2Audio.py .
+# Set the default command (optional)
+CMD ["bash"]
