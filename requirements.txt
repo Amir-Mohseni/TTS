@@ -10,3 +10,4 @@ fastapi
 uvicorn[standard]
 gradio
 ffmpeg
+openai
