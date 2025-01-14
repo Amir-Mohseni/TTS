@@ -33,6 +33,12 @@ This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech 
 
     Open your web browser and navigate to `http://127.0.0.1:7860` to use the application.
 
+5. **Configure the LLM:**
+
+    Navigate to the "Configuration" tab in the application. Select the LLM type (API or Local Model) and provide the necessary details. Click "Configure LLM" to complete the setup.
+
+    ![Configuration Example](docs/configuration.png)
+
 ## Features
 
 - **Text to Audio:** Convert text to speech using various voices.

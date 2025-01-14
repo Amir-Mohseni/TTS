@@ -128,16 +128,15 @@ def create_gradio_interface():
         with gr.Tabs() as tabs:
             # Configuration Tab
             with gr.Tab("Configuration"):
-                def configure_visibility(is_configured_state):
-                    """Determine the visibility of the configuration tab."""
-                    if is_configured_state:
-                        return gr.update(visible=False)
-                    return gr.update(visible=True)
-
                 gr.Markdown("### Configure LLM")
                 llm_type = gr.Radio(
                     choices=["API", "Local Model"],
                     label="LLM Type",
+                )
+                model = gr.Textbox(
+                    label="Model Name (API-based LLM)",
+                    placeholder="Enter model name, e.g., gpt-4o-mini",
+                    visible=False
                 )
                 base_url = gr.Textbox(
                     label="API Base URL (for API-based LLM)",
@@ -162,20 +161,21 @@ def create_gradio_interface():
                         base_url: gr.update(visible=selected_llm == "API"),
                         api_key: gr.update(visible=selected_llm == "API"),
                         model_name: gr.update(visible=selected_llm == "Local Model"),
+                        model: gr.update(visible=selected_llm == "API"),
                     }
 
                 llm_type.change(
                     fn=update_visibility,
                     inputs=[llm_type],
-                    outputs=[base_url, api_key, model_name]
+                    outputs=[base_url, api_key, model_name, model]
                 )
 
-                def configure_llm(llm_type, base_url, api_key, model_name):
+                def configure_llm(llm_type, base_url, api_key, model_name, model):
                     try:
                         if llm_type == "API":
-                            if not base_url or not api_key:
+                            if not base_url or not api_key or not model:
                                 return "Error: Base URL and API key are required for API-based LLM.", False
-                            app.set_llm(LLMAPI(base_url=base_url, api_key=api_key))
+                            app.set_llm(LLMAPI(base_url=base_url, api_key=api_key, model=model))
                             return "Configured API-based LLM successfully!", True
                         elif llm_type == "Local Model":
                             if not model_name:
@@ -189,7 +189,7 @@ def create_gradio_interface():
 
                 configure_button.click(
                     fn=configure_llm,
-                    inputs=[llm_type, base_url, api_key, model_name],
+                    inputs=[llm_type, base_url, api_key, model_name, model],
                     outputs=[llm_status, is_configured]
                 )
 
@@ -289,5 +289,5 @@ if __name__ == "__main__":
     demo = create_gradio_interface()
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7755
+        server_port=7860
     )
