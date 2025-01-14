@@ -1,7 +1,7 @@
 import gradio as gr
 from text2audio import TextToAudio
 from transcriber import AudioTranscriber
-from llm import LLM
+from llm import LLM, LLMModel, LLMAPI
 import logging
 from typing import Tuple, Optional
 import os
@@ -12,13 +12,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class App:
-    def __init__(self):
+    def __init__(self, tts = TextToAudio(), transcriber = AudioTranscriber(), conversation_history = [], audio_files = []):
         """Initialize converters and LLM."""
-        self.tts = TextToAudio()
-        self.transcriber = AudioTranscriber()
-        self.llm = LLM("meta-llama/Llama-3.2-1B-Instruct")
-        self.conversation_history = []
-        self.audio_files = []
+        self.tts = tts
+        self.transcriber = transcriber
+        self.conversation_history = conversation_history
+        self.audio_files = audio_files
+        
+    def set_llm(self, llm: LLM = LLMModel(model_name="HuggingFaceTB/SmolLM2-360M-Instruct")):
+        self.llm = llm
         
     def text_to_audio(self, text: str, voice_name: str) -> Tuple[str, str]:
         """Convert text to audio."""
@@ -117,13 +119,83 @@ class App:
 
 def create_gradio_interface():
     """Create the Gradio interface."""
-    app = App()
-    
+    app = App()  # App with no LLM initially
+
     with gr.Blocks() as demo:
-        gr.Markdown("# 🎙️ Text and Audio Conversion Tool")
-        
-        with gr.Tabs():
+        # Shared state for configuration status
+        is_configured = gr.State(value=False)
+
+        with gr.Tabs() as tabs:
+            # Configuration Tab
+            with gr.Tab("Configuration"):
+                def configure_visibility(is_configured_state):
+                    """Determine the visibility of the configuration tab."""
+                    if is_configured_state:
+                        return gr.update(visible=False)
+                    return gr.update(visible=True)
+
+                gr.Markdown("### Configure LLM")
+                llm_type = gr.Radio(
+                    choices=["API", "Local Model"],
+                    label="LLM Type",
+                )
+                base_url = gr.Textbox(
+                    label="API Base URL (for API-based LLM)",
+                    placeholder="Enter base URL, e.g., http://localhost:7860/v1",
+                    visible=False
+                )
+                api_key = gr.Textbox(
+                    label="API Key (for API-based LLM)",
+                    placeholder="Enter your API key",
+                    visible=False
+                )
+                model_name = gr.Textbox(
+                    label="Hugging Face Model Name (for Local Model)",
+                    placeholder="Enter Hugging Face model name, e.g., HuggingFaceTB/SmolLM2-360M-Instruct",
+                    visible=False
+                )
+                configure_button = gr.Button("Configure LLM")
+                llm_status = gr.Textbox(label="Configuration Status", interactive=False)
+
+                def update_visibility(selected_llm):
+                    return {
+                        base_url: gr.update(visible=selected_llm == "API"),
+                        api_key: gr.update(visible=selected_llm == "API"),
+                        model_name: gr.update(visible=selected_llm == "Local Model"),
+                    }
+
+                llm_type.change(
+                    fn=update_visibility,
+                    inputs=[llm_type],
+                    outputs=[base_url, api_key, model_name]
+                )
+
+                def configure_llm(llm_type, base_url, api_key, model_name):
+                    try:
+                        if llm_type == "API":
+                            if not base_url or not api_key:
+                                return "Error: Base URL and API key are required for API-based LLM.", False
+                            app.set_llm(LLMAPI(base_url=base_url, api_key=api_key))
+                            return "Configured API-based LLM successfully!", True
+                        elif llm_type == "Local Model":
+                            if not model_name:
+                                return "Error: Model name is required for Local Model.", False
+                            app.set_llm(LLMModel(model_name=model_name))
+                            return "Configured Local Model successfully!", True
+                        else:
+                            return "Error: Invalid LLM type selected.", False
+                    except Exception as e:
+                        return f"Error configuring LLM: {str(e)}", False
+
+                configure_button.click(
+                    fn=configure_llm,
+                    inputs=[llm_type, base_url, api_key, model_name],
+                    outputs=[llm_status, is_configured]
+                )
+
+            # Functional Tabs
             with gr.Tab("Text to Audio"):
+                gr.Markdown("### Text to Audio Conversion")
                 with gr.Row():
                     with gr.Column():
                         text_input = gr.Textbox(
@@ -148,8 +220,8 @@ def create_gradio_interface():
                     outputs=[audio_output, phonemes_output]
                 )
             
-            # Audio to Text tab
             with gr.Tab("Audio to Text"):
+                gr.Markdown("### Audio to Text Conversion")
                 with gr.Row():
                     with gr.Column():
                         audio_input = gr.Audio(
@@ -171,10 +243,8 @@ def create_gradio_interface():
                     outputs=text_output
                 )
             
-            # Audio Conversation tab
             with gr.Tab("Audio Conversation"):
-                gr.Markdown("Have a conversation with the AI using voice!")
-                
+                gr.Markdown("### AI Audio Conversation")
                 with gr.Row():
                     with gr.Column():
                         audio_input = gr.Audio(
@@ -219,5 +289,5 @@ if __name__ == "__main__":
     demo = create_gradio_interface()
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7860
+        server_port=7755
     )
