@@ -1,6 +1,8 @@
-# Text-to-Speech (TTS) Application
+# Speech-to-Speech (STS) Application
 
-This repository contains a Text-to-Speech (TTS) application. The main script is `Text2Audio.py`, which can be run using Docker. The model used is based on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M).
+This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech application that is dockerized and easy to use. The application allows you to convert text to audio, transcribe audio to text using Whisper, and have back-and-forth conversations with an LLM. The LLM used is [SmolLM-360M-Instruct-finetuned-sft](https://huggingface.co/AmirMohseni/SmolLM-360M-Instruct-finetuned-sft).
+
+![App Showcase](App.png)
 
 ## Prerequisites
 
@@ -31,12 +33,20 @@ This repository contains a Text-to-Speech (TTS) application. The main script is 
 
 4. **Access the application:**
 
-    Open your web browser and navigate to `http://127.0.0.1:7860` to use the TTS application.
+    Open your web browser and navigate to `http://127.0.0.1:7860` to use the application.
+
+## Features
+
+- **Text to Audio:** Convert text to speech using various voices.
+- **Audio to Text:** Transcribe audio files to text using Whisper.
+- **Audio Conversation:** Have a conversation with the AI using voice input and receive voice responses.
 
 ## Files
 
-- `app.py`: The gradio application.
-- `Text2Audio.py`: The tts script.
+- `main.py`: The main script to run the application.
+- `text2audio.py`: The script for converting text to audio.
+- `transcriber.py`: The script for transcribing audio to text.
+- `llm.py`: The script for interacting with the LLM.
 - `Dockerfile`: The Dockerfile used to build the Docker image.
 - `requirements.txt`: The file containing Python dependencies.
 

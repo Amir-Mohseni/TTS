@@ -9,3 +9,4 @@ soundfile
 fastapi
 uvicorn[standard]
 gradio
+ffmpeg
