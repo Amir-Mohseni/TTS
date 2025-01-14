@@ -11,13 +11,14 @@ import soundfile as sf
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class CombinedApp:
+class App:
     def __init__(self):
         """Initialize converters and LLM."""
         self.tts = TextToAudio()
         self.transcriber = AudioTranscriber()
         self.llm = LLM("HuggingFaceTB/SmolLM2-360M-Instruct")
         self.conversation_history = []
+        self.audio_files = []
         
     def text_to_audio(self, text: str, voice_name: str) -> Tuple[str, str]:
         """Convert text to audio."""
@@ -32,29 +33,43 @@ class CombinedApp:
         """Convert text to audio and save to file."""
         try:
             audio, phonemes = self.text_to_audio(text, voice_name)
-    
-            os.makedirs("saved_audio", exist_ok=True)
-            audio_path = "saved_audio/temp.wav"
-            sf.write(audio_path, audio, self.tts.sample_rate)
+            audio_path = self.create_audio_file(audio)
             return audio_path, phonemes
         except Exception as e:
             logger.error(f"Error in text_to_audio_file: {e}")
             return None, f"Error: {str(e)}"
+
+    def create_audio_file(self, audio, is_tuple: bool = False) -> str:
+        os.makedirs("saved_audio", exist_ok=True)
+        audio_path = f"saved_audio/audio_{len(self.audio_files)}.wav"
+        if is_tuple:
+            # Unpack the tuple
+            samplerate, waveform = audio
+        else:
+            # Assume audio is a tuple
+            samplerate, waveform = self.tts.sample_rate, audio
+        sf.write(audio_path, waveform, samplerate)
+        logger.info(f"Audio file saved to: {audio_path}")
+        self.audio_files.append(audio_path)
+        return audio_path
     
-    def audio_to_text(self, audio) -> str:
+    def audio_to_text(self, audio_numpy) -> str:
         """Convert audio to text."""
-        if not audio:
+        if audio_numpy is None:
             return "No audio provided"
         
-        result = self.transcriber.transcribe(audio)
+        audio_path = self.create_audio_file(audio_numpy, is_tuple=True)
+        result = self.transcriber.transcribe(audio_path)
+        
         if result["success"]:
             return result["text"]
         return f"Error: {result['error']}"
     
-    def process_conversation_turn(self, audio_input: str, voice_name: str) -> Tuple[str, str, str]:
+    def process_conversation_turn(self, audio_input, voice_name: str) -> Tuple[str, str, str]:
         """Process one turn of audio conversation with the LLM."""
         try:
             # Convert audio to text
+            print(audio_input)
             user_text = self.audio_to_text(audio_input)
             if user_text.startswith("Error:"):
                 return None, user_text, "Conversation failed at transcription"
@@ -75,7 +90,7 @@ class CombinedApp:
             # Format conversation history for display
             display_text = self._format_conversation_history()
             
-            return audio_path, display_text, user_text
+            return audio_path, display_text
             
         except Exception as e:
             logger.error(f"Error in conversation turn: {e}")
@@ -94,11 +109,15 @@ class CombinedApp:
     def reset_conversation(self) -> str:
         """Reset the conversation history."""
         self.conversation_history = []
+        for audio_file in self.audio_files:
+            if os.path.exists(audio_file):
+                os.remove(audio_file)
+        self.audio_files = []
         return "Conversation reset. Start a new conversation!"
 
 def create_gradio_interface():
     """Create the Gradio interface."""
-    app = CombinedApp()
+    app = App()
     
     with gr.Blocks() as demo:
         gr.Markdown("# 🎙️ Text and Audio Conversion Tool")
@@ -120,7 +139,7 @@ def create_gradio_interface():
                         tts_button = gr.Button("🎯 Convert to Audio")
                     
                     with gr.Column():
-                        audio_output = gr.Audio(label="Generated Audio", type="filepath")
+                        audio_output = gr.Audio(label="Generated Audio", type="numpy")
                         phonemes_output = gr.Textbox(label="Phonemes", lines=2)
                 
                 tts_button.click(
@@ -135,7 +154,7 @@ def create_gradio_interface():
                     with gr.Column():
                         audio_input = gr.Audio(
                             sources=["microphone", "upload"],
-                            type="filepath",
+                            type="numpy",
                             label="Record or Upload Audio"
                         )
                         stt_button = gr.Button("🎯 Convert to Text")
@@ -160,8 +179,8 @@ def create_gradio_interface():
                     with gr.Column():
                         audio_input = gr.Audio(
                             sources=["microphone", "upload"],
-                            type="filepath",
-                            label="Speak or Upload Audio"
+                            type="numpy",
+                            label="Speak or Upload Audio",
                         )
                         voice_dropdown = gr.Dropdown(
                             choices=app.tts.voice_names,
@@ -177,11 +196,6 @@ def create_gradio_interface():
                             lines=10,
                             interactive=False
                         )
-                        last_transcription = gr.TextArea(
-                            label="Your Last Message (Transcribed)",
-                            lines=2,
-                            interactive=False
-                        )
                         ai_audio_output = gr.Audio(
                             label="AI Response",
                             type="filepath"
@@ -190,7 +204,7 @@ def create_gradio_interface():
                 send_button.click(
                     fn=app.process_conversation_turn,
                     inputs=[audio_input, voice_dropdown],
-                    outputs=[ai_audio_output, conversation_output, last_transcription]
+                    outputs=[ai_audio_output, conversation_output]
                 )
                 
                 reset_button.click(

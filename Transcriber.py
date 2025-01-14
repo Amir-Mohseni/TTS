@@ -48,17 +48,17 @@ class AudioTranscriber:
                 temp_file = tmp.name
                 with open(audio_path, 'rb') as src:
                     tmp.write(src.read())
-
-            # Transcribe the audio
-            result = self.asr_pipe(temp_file)
-            transcription = result["text"]
-            logger.info("Transcription completed successfully")
-            
-            return {
-                "success": True,
-                "text": transcription,
-                "error": None
-            }
+                    
+                # Transcribe the audio
+                result = self.asr_pipe(temp_file)
+                transcription = result["text"]
+                logger.info("Transcription completed successfully")
+                
+                return {
+                    "success": True,
+                    "text": transcription,
+                    "error": None
+                }
                    
         except Exception as e:
             logger.error(f"Transcription error: {e}")
