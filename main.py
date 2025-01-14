@@ -16,7 +16,7 @@ class App:
         """Initialize converters and LLM."""
         self.tts = TextToAudio()
         self.transcriber = AudioTranscriber()
-        self.llm = LLM("HuggingFaceTB/SmolLM2-360M-Instruct")
+        self.llm = LLM("meta-llama/Llama-3.2-1B-Instruct")
         self.conversation_history = []
         self.audio_files = []
         

@@ -65,8 +65,6 @@ class LLM:
         
 if __name__ == "__main__":
     llm = LLM()
-    messages = llm.new_conversation("Hello, my name is Amir. What is your name?")
-    messages = llm.generate(messages)
-    messages = llm.add_user_query(messages, "Nice to meet you, can I call you John?")
+    messages = llm.new_conversation("Hello, what is the capital of France?")
     messages = llm.generate(messages)
     print(messages)
