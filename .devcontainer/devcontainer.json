@@ -12,6 +12,6 @@
         "ms-azuretools.vscode-docker"
     ],
     "forwardPorts": [],
-    "postCreateCommand": "pip install --no-cache-dir -r requirements.txt",
+    "postCreateCommand": "pip install --no-cache-dir -r requirements.txt && git lfs install",
     "remoteUser": "root"
 }
