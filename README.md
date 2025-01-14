@@ -1,4 +1,4 @@
-# Speech-to-Speech (STS) Application
+# VoiceBridge: A Speech-to-Speech (STS) Application
 
 This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech application that is dockerized and easy to use. The application allows you to convert text to audio, transcribe audio to text using Whisper, and have back-and-forth conversations with an LLM. The LLM used is [SmolLM-360M-Instruct-finetuned-sft](https://huggingface.co/AmirMohseni/SmolLM-360M-Instruct-finetuned-sft).
 
@@ -13,20 +13,20 @@ This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech 
 1. **Clone the repository:**
 
     ```sh
-    git clone https://github.com/Amir-Mohseni/tts.git
-    cd tts
+    git clone https://github.com/Amir-Mohseni/VoiceBridge.git
+    cd VoiceBridge
     ```
 
 2. **Build the Docker image:**
 
     ```sh
-    docker build -t tts-app .
+    docker build -t vb-app .
     ```
 
 3. **Run the Docker container:**
 
     ```sh
-    docker run -it --rm -p 7860:7860 tts-app
+    docker run -it --rm -p 7860:7860 vb-app
     ```
 
     This will start the application and map port 7860 of the container to port 7860 on your host machine.
