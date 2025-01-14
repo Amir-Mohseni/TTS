@@ -1,6 +1,6 @@
 # VoiceBridge: A Speech-to-Speech (STS) Application
 
-This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech application that is dockerized and easy to use. The application allows you to convert text to audio, transcribe audio to text using Whisper, and have back-and-forth conversations with an LLM. The LLM used is [SmolLM-360M-Instruct-finetuned-sft](https://huggingface.co/HuggingFaceTB/SmolLM-360M-Instruct-finetuned-sft).
+This repository contains a Text-to-Speech, Speech-to-text, and Speech-to-Speech application that is dockerized and easy to use. The application allows you to convert text to audio, transcribe audio to text using Whisper, and have back-and-forth conversations with an LLM. The LLM used is [meta-llama/Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct).
 
 ![App Showcase](App.png)
 
