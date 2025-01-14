@@ -16,7 +16,7 @@ class AudioTranscriber:
     A class to handle audio transcription using Whisper model.
     """
     
-    def __init__(self, model_name: str = "openai/whisper-small"):
+    def __init__(self, model_name: str = "openai/whisper-small", lang: str = "en"):
         """
         Initialize the AudioTranscriber with specified model.
         
@@ -24,6 +24,7 @@ class AudioTranscriber:
             model_name (str): Name of the Whisper model to use
         """
         self.model_name = model_name
+        self.lang = lang
         self.asr_pipe = pipeline("automatic-speech-recognition", model=model_name)
         logger.info(f"Initialized AudioTranscriber with model: {model_name}")
     

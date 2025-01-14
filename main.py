@@ -1,6 +1,7 @@
 import gradio as gr
-from Text2Audio import TextToAudio
-from Transcriber import AudioTranscriber
+from text2audio import TextToAudio
+from transcriber import AudioTranscriber
+from llm import LLM
 import logging
 from typing import Tuple, Optional
 import os
@@ -12,9 +13,11 @@ logger = logging.getLogger(__name__)
 
 class CombinedApp:
     def __init__(self):
-        """Initialize both converters."""
+        """Initialize converters and LLM."""
         self.tts = TextToAudio()
         self.transcriber = AudioTranscriber()
+        self.llm = LLM("HuggingFaceTB/SmolLM2-360M-Instruct")
+        self.conversation_history = []
         
     def text_to_audio(self, text: str, voice_name: str) -> Tuple[str, str]:
         """Convert text to audio."""
@@ -48,23 +51,50 @@ class CombinedApp:
             return result["text"]
         return f"Error: {result['error']}"
     
-    def chain_conversion(self, text: str, voice_name: str) -> str:
-        """Convert text to audio and then back to text."""
+    def process_conversation_turn(self, audio_input: str, voice_name: str) -> Tuple[str, str, str]:
+        """Process one turn of audio conversation with the LLM."""
         try:
-            # First convert text to audio
-            audio_path, _ = self.text_to_audio_file(text, voice_name)
-            if not audio_path:
-                return "Failed to generate audio"
+            # Convert audio to text
+            user_text = self.audio_to_text(audio_input)
+            if user_text.startswith("Error:"):
+                return None, user_text, "Conversation failed at transcription"
+            
+            # Process with LLM
+            if len(self.conversation_history) == 0:
+                messages = self.llm.new_conversation(user_text)
+            else:
+                messages = self.llm.add_user_query(self.conversation_history, user_text)
                 
-            # Then convert audio back to text
-            result = self.transcriber.transcribe(audio_path)
-            if result["success"]:
-                return result["text"]
-            return f"Error in transcription: {result['error']}"
+            new_messages = self.llm.generate(messages)
+            llm_response = new_messages[-1]["content"]
+            self.conversation_history = new_messages
+            
+            # Convert LLM response to audio
+            audio_path, _ = self.text_to_audio_file(llm_response, voice_name)
+            
+            # Format conversation history for display
+            display_text = self._format_conversation_history()
+            
+            return audio_path, display_text, user_text
             
         except Exception as e:
-            logger.error(f"Error in chain conversion: {e}")
-            return f"Error: {str(e)}"
+            logger.error(f"Error in conversation turn: {e}")
+            return None, f"Error: {str(e)}", ""
+            
+    def _format_conversation_history(self) -> str:
+        """Format conversation history for display."""
+        formatted = ""
+        for msg in self.conversation_history:
+            role = msg["role"]
+            content = msg["content"]
+            if role != "system":
+                formatted += f"{role.capitalize()}: {content}\n\n"
+        return formatted
+    
+    def reset_conversation(self) -> str:
+        """Reset the conversation history."""
+        self.conversation_history = []
+        return "Conversation reset. Start a new conversation!"
 
 def create_gradio_interface():
     """Create the Gradio interface."""
@@ -74,7 +104,6 @@ def create_gradio_interface():
         gr.Markdown("# 🎙️ Text and Audio Conversion Tool")
         
         with gr.Tabs():
-            # Text to Audio tab
             with gr.Tab("Text to Audio"):
                 with gr.Row():
                     with gr.Column():
@@ -123,32 +152,51 @@ def create_gradio_interface():
                     outputs=text_output
                 )
             
-            # Chain Conversion tab
-            with gr.Tab("Chain Conversion"):
+            # Audio Conversation tab
+            with gr.Tab("Audio Conversation"):
+                gr.Markdown("Have a conversation with the AI using voice!")
+                
                 with gr.Row():
                     with gr.Column():
-                        chain_text_input = gr.Textbox(
-                            label="Input Text",
-                            placeholder="Enter text to convert to speech and back...",
-                            lines=3
+                        audio_input = gr.Audio(
+                            sources=["microphone", "upload"],
+                            type="filepath",
+                            label="Speak or Upload Audio"
                         )
-                        chain_voice_dropdown = gr.Dropdown(
+                        voice_dropdown = gr.Dropdown(
                             choices=app.tts.voice_names,
                             value=app.tts.voice_names[0],
-                            label="Voice"
+                            label="AI Voice"
                         )
-                        chain_button = gr.Button("🔄 Convert Text ➡️ Audio ➡️ Text")
+                        send_button = gr.Button("🎤 Send Message")
+                        reset_button = gr.Button("🔄 Reset Conversation")
                     
                     with gr.Column():
-                        chain_output = gr.Textbox(
-                            label="Results",
-                            lines=5
+                        conversation_output = gr.TextArea(
+                            label="Conversation History",
+                            lines=10,
+                            interactive=False
+                        )
+                        last_transcription = gr.TextArea(
+                            label="Your Last Message (Transcribed)",
+                            lines=2,
+                            interactive=False
+                        )
+                        ai_audio_output = gr.Audio(
+                            label="AI Response",
+                            type="filepath"
                         )
                 
-                chain_button.click(
-                    fn=app.chain_conversion,
-                    inputs=[chain_text_input, chain_voice_dropdown],
-                    outputs=chain_output
+                send_button.click(
+                    fn=app.process_conversation_turn,
+                    inputs=[audio_input, voice_dropdown],
+                    outputs=[ai_audio_output, conversation_output, last_transcription]
+                )
+                
+                reset_button.click(
+                    fn=app.reset_conversation,
+                    inputs=[],
+                    outputs=[conversation_output]
                 )
     
     return demo
