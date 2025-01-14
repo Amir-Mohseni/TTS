@@ -24,8 +24,8 @@ RUN mkdir -p /app/openai/whisper-small && \
     git clone https://huggingface.co/openai/whisper-small /app/openai/whisper-small
 
 # Download SmolLM model
-RUN mkdir -p /app/HuggingFaceTB/SmolLM2-360M-Instruct && \
-    git clone https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct /app/HuggingFaceTB/SmolLM2-360M-Instruct
+RUN mkdir -p /app/meta-llama/Llama-3.2-1B-Instruct && \
+    git clone https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct /app/meta-llama/Llama-3.2-1B-Instruct
 
 # Optionally download Kokoro-82M
 RUN mkdir -p /app/Kokoro_82M && \
