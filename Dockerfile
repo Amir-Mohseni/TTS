@@ -23,9 +23,9 @@ RUN git lfs install
 RUN mkdir -p /app/openai/whisper-small && \
     git clone https://huggingface.co/openai/whisper-small /app/openai/whisper-small
 
-# Download LLM model
-RUN mkdir -p /app/HuggingFaceTB/SmolLM2-1.7B-Instruct && \
-    git clone https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct /app/HuggingFaceTB/SmolLM2-360M-Instruct
+# Download LLM model for faster loading
+# RUN mkdir -p /app/HuggingFaceTB/SmolLM2-1.7B-Instruct && \
+#    git clone https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct /app/HuggingFaceTB/SmolLM2-360M-Instruct
 
 # Optionally download Kokoro-82M
 RUN mkdir -p /app/Kokoro_82M && \

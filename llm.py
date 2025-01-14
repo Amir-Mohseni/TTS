@@ -52,7 +52,7 @@ class LLMModel(LLM):
 
 class LLMAPI(LLM):
     """Subclass for using an API endpoint."""
-    def __init__(self, base_url: str, api_key: str = 'your-api-key', model: str = 'llama-3.2-3b-instruct'):
+    def __init__(self, base_url: str, api_key: str = None, model: str = 'llama-3.2-3b-instruct'):
         self.base_url = base_url
         self.api_key = api_key
         self.model = model
@@ -65,12 +65,13 @@ class LLMAPI(LLM):
         """Set the model to use for generating text."""
         self.model = model
     
-    def generate(self, messages: list[dict]) -> list[str]:
+    def generate(self, messages: list[dict], temperature = 0.7) -> list[str]:
         """Generate text from conversation using an API endpoint."""
         try:
             completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
+                temperature=temperature,
             )
             response = completion.choices[0].message.content
             return self.add_assistant_reply(messages, response)
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         
     if type == 'api':
         # Example usage with LLMAPI 
-        api_llm = LLMAPI(base_url="http://127.0.0.1:1234", api_key='your-api-key', model='llama-3.2-3b-instruct')
+        api_llm = LLMAPI(base_url="http://145.127.4.113:7860/v1/", api_key='your-api-key', model='llama-3.2-3b-instruct')
         messages = api_llm.new_conversation("Hello, what is the capital of France?")
         reply = api_llm.generate(messages)
         print(f"API Reply: {reply}")
